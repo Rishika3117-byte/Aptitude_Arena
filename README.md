@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Apptitude - Master Your Aptitude Skills
 
 This app was created using https://getmocha.com.
@@ -8,3 +9,6 @@ To run the devserver:
 npm install
 npm run dev
 ```
+=======
+# Aptitude_Arena
+>>>>>>> 2cf938cbfd22a96d87420aa80460e0cab89dd079
