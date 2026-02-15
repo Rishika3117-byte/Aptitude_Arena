@@ -8,7 +8,7 @@
   "ignore": [
     ".bun/**",
     "dist/**",
-    "worker-configuration.d.ts",
+    
     "src/react-app/vite-env.d.ts"
   ],
   "ignoreDependencies": [
