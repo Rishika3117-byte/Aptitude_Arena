@@ -27,8 +27,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setTimeout(() => setShowContent(true), 300);
-    
-    // Load data asynchronously
+
     const loadData = async () => {
       const stats = await getUserStats();
       const progress = await getGameProgressForDashboard();
@@ -39,10 +38,9 @@ export default function Dashboard() {
   }, []);
 
   if (!userStats) {
-    return <div>Loading...</div>; // Or a proper loading component
+    return <div>Loading...</div>;
   }
 
-  // Get actual user data from localStorage
   const userData = {
     name: 'Player',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Player',
@@ -53,8 +51,7 @@ export default function Dashboard() {
     currentStreak: userStats.currentStreak,
     bestStreak: userStats.bestStreak,
   };
-  
-  // Calculate total achievements (1 per completed level)
+
   const totalAchievements = gameProgress.reduce((sum, game) => sum + game.completed, 0);
 
   return (
@@ -74,12 +71,12 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="relative z-10 px-4 py-20 max-w-7xl mx-auto">
-        
+
         {/* Profile Section */}
         <div className={`mb-12 transition-all duration-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
           <div className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              
+
               {/* Avatar */}
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 group-hover:border-white/40 transition-all duration-300 group-hover:scale-110">
@@ -92,7 +89,7 @@ export default function Dashboard() {
               <div className="flex-1 text-center md:text-left">
                 <h2 className="text-4xl font-bold text-white mb-2">{userData.name}</h2>
                 <p className="text-white/60 text-lg mb-4">Global Rank: <span className="text-cyan-400 font-semibold">{userData.rank}</span></p>
-                
+
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300">
@@ -100,19 +97,16 @@ export default function Dashboard() {
                     <div className="text-2xl font-bold text-white"><AnimatedCounter value={userData.totalScore} duration={2000} /></div>
                     <div className="text-sm text-white/60">Total Score</div>
                   </div>
-                  
                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300">
                     <Target className="w-6 h-6 text-green-400 mb-2 mx-auto md:mx-0" />
                     <div className="text-2xl font-bold text-white"><AnimatedCounter value={userData.accuracy} duration={2000} />%</div>
                     <div className="text-sm text-white/60">Accuracy</div>
                   </div>
-                  
                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300">
                     <TrendingUp className="w-6 h-6 text-purple-400 mb-2 mx-auto md:mx-0" />
                     <div className="text-2xl font-bold text-white"><AnimatedCounter value={userData.gamesPlayed} duration={2000} /></div>
                     <div className="text-sm text-white/60">Games Played</div>
                   </div>
-                  
                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300">
                     <Award className="w-6 h-6 text-pink-400 mb-2 mx-auto md:mx-0" />
                     <div className="text-2xl font-bold text-white"><AnimatedCounter value={totalAchievements} duration={2000} /></div>
@@ -128,9 +122,8 @@ export default function Dashboard() {
         <div className={`mb-12 transition-all duration-1000 delay-200 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 opacity-50"></div>
-            
             <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
-              
+
               {/* Current Streak */}
               <div className="flex items-center gap-6">
                 <StreakFlame count={userData.currentStreak} />
@@ -167,7 +160,7 @@ export default function Dashboard() {
             <TrendingUp className="w-8 h-8 text-cyan-400" />
             Game Progress
           </h3>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {gameProgress.map((game, index) => (
               <GameProgressCard key={game.id} game={game} delay={index * 100} />

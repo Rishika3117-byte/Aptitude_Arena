@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Clock, Award, CheckCircle2, XCircle, Sparkles, Lightbulb, Timer, TimerOff } from 'lucide-react';
 import AnimatedBackground from '../components/AnimatedBackground';
+import Confetti from '../components/Confetti';
+import MusicToggle from '../components/MusicToggle';
 import { generateQuestionSet, Question } from '../utils/questionGenerators';
 import { generateLogicalQuestionSet } from '../utils/logicalQuestionGenerator';
 import { generateVerbalQuestionSet } from '../utils/verbalQuestionGenerator';
 import { generateNonverbalQuestionSet } from '../utils/nonverbalQuestionGenerator';
 import { generateDatavisQuestionSet } from '../utils/datavisQuestionGenerator';
 import DataVisChart from '../components/DataVisChart';
+import { updateLevelProgress } from '../utils/gameProgress';
 
 interface DataVisQuestion extends Question {
   chartType?: 'bar' | 'pie' | 'line';
@@ -16,14 +19,11 @@ interface DataVisQuestion extends Question {
   xKey?: string;
   yKey?: string;
 }
-import Confetti from '../components/Confetti';
-import MusicToggle from '../components/MusicToggle';
-import { updateLevelProgress } from '../utils/gameProgress';
 
 export default function GamePlay() {
   const { gameId, level } = useParams();
   const navigate = useNavigate();
-  
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -42,7 +42,7 @@ export default function GamePlay() {
   // Generate questions on mount
   useEffect(() => {
     let newQuestions: Question[] = [];
-    
+
     switch (gameId) {
       case 'quantitative':
         newQuestions = generateQuestionSet(questionCount, levelNum);
@@ -62,7 +62,7 @@ export default function GamePlay() {
       default:
         newQuestions = generateQuestionSet(questionCount, levelNum);
     }
-    
+
     setQuestions(newQuestions);
   }, [gameId, levelNum]);
 
@@ -95,7 +95,7 @@ export default function GamePlay() {
 
     setSelectedAnswer(index);
     const isCorrect = index === questions[currentQuestionIndex].correctAnswer;
-    
+
     if (isCorrect) {
       const timeBonus = timerEnabled ? timeLeft * 10 : 100;
       setScore(score + timeBonus);
@@ -133,7 +133,7 @@ export default function GamePlay() {
 
   const restartGame = () => {
     let newQuestions: Question[] = [];
-    
+
     switch (gameId) {
       case 'quantitative':
         newQuestions = generateQuestionSet(questionCount, levelNum);
@@ -153,7 +153,7 @@ export default function GamePlay() {
       default:
         newQuestions = generateQuestionSet(questionCount, levelNum);
     }
-    
+
     setQuestions(newQuestions);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
@@ -175,19 +175,19 @@ export default function GamePlay() {
 
   if (gameOver) {
     const accuracy = Math.round((correctAnswers / questions.length) * 100);
-    
+
     return (
       <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <AnimatedBackground />
         {accuracy >= 60 && <Confetti />}
-        
+
         <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 border border-white/20 max-w-2xl w-full text-center">
             <Award className="w-24 h-24 text-yellow-400 mx-auto mb-6 animate-bounce" />
-            
+
             <h2 className="text-5xl font-black text-white mb-4">Level Complete!</h2>
             <p className="text-xl text-white/70 mb-8">Level {levelNum}</p>
-            
+
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
                 <div className="text-4xl font-bold text-cyan-400 mb-2">{score}</div>
@@ -257,11 +257,10 @@ export default function GamePlay() {
             {/* Timer Toggle */}
             <button
               onClick={() => setTimerEnabled(!timerEnabled)}
-              className={`flex items-center gap-2 backdrop-blur-md px-4 py-2 rounded-full border transition-all duration-300 ${
-                timerEnabled 
-                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' 
+              className={`flex items-center gap-2 backdrop-blur-md px-4 py-2 rounded-full border transition-all duration-300 ${timerEnabled
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
                   : 'bg-white/10 border-white/20 text-white/60'
-              }`}
+                }`}
               title={timerEnabled ? 'Timer ON' : 'Timer OFF'}
             >
               {timerEnabled ? (
@@ -280,7 +279,7 @@ export default function GamePlay() {
                 </span>
               </div>
             )}
-            
+
             {/* Score */}
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
               <Award className="w-5 h-5 text-yellow-400" />
@@ -307,22 +306,21 @@ export default function GamePlay() {
       <div className="relative z-10 px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 animate-fade-in">
-            
+
             {/* Topic Badge and Hint Button */}
             <div className="flex items-center justify-between mb-6">
               <div className="inline-block px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-white font-semibold text-sm">
                 {currentQuestion.topic}
               </div>
-              
+
               {/* Hint Button */}
               <button
                 onClick={() => setShowHint(!showHint)}
                 disabled={showExplanation}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${
-                  showHint 
-                    ? 'bg-yellow-500/30 border-2 border-yellow-400 text-yellow-300' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${showHint
+                    ? 'bg-yellow-500/30 border-2 border-yellow-400 text-yellow-300'
                     : 'bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:border-white/30'
-                } ${showExplanation ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+                  } ${showExplanation ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
                 <Lightbulb className={`w-5 h-5 ${showHint ? 'animate-pulse' : ''}`} />
                 {showHint ? 'Hide Hint' : 'Show Hint'}
@@ -368,7 +366,7 @@ export default function GamePlay() {
                 const showResult = showExplanation;
 
                 let className = "w-full p-6 rounded-2xl text-left text-lg font-semibold transition-all duration-300 border-2 ";
-                
+
                 if (!showResult) {
                   className += "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30 hover:scale-102 text-white cursor-pointer";
                 } else if (isCorrect) {

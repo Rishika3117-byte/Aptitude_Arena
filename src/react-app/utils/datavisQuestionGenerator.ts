@@ -1,5 +1,15 @@
 import { Question } from './questionGenerators';
 
+// Extended Question type that carries chart data
+export interface DataVisQuestionWithChart extends Question {
+  chartType?: 'bar' | 'pie' | 'line';
+  chartData?: Record<string, unknown>[];
+  chartTitle?: string;
+  xKey?: string;
+  yKey?: string;
+  valueKey?: string;
+}
+
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -13,167 +23,209 @@ function shuffle<T>(array: T[]): T[] {
   return newArray;
 }
 
-// Bar Chart Interpretation
-function generateBarChartQuestion(): Question {
+// ── Bar Chart Question ──────────────────────────────────────────────────────
+function generateBarChartQuestion(): DataVisQuestionWithChart {
   const months = ['Jan', 'Feb', 'Mar', 'Apr'];
-  const values = [randomInt(50, 100), randomInt(50, 100), randomInt(50, 100), randomInt(50, 100)];
+  const values = months.map(() => randomInt(40, 100));
   const max = Math.max(...values);
   const maxMonth = months[values.indexOf(max)];
-  
-  let wrong1 = months[randomInt(0, 3)];
-  while (wrong1 === maxMonth) {
-    wrong1 = months[randomInt(0, 3)];
-  }
-  let wrong2 = months[randomInt(0, 3)];
-  while (wrong2 === maxMonth || wrong2 === wrong1) {
-    wrong2 = months[randomInt(0, 3)];
-  }
-  let wrong3 = months[randomInt(0, 3)];
-  while (wrong3 === maxMonth || wrong3 === wrong1 || wrong3 === wrong2) {
-    wrong3 = months[randomInt(0, 3)];
-  }
-  
-  const options = shuffle([maxMonth, wrong1, wrong2, wrong3]);
-  
+
+  const otherMonths = months.filter((m) => m !== maxMonth);
+  const distractors = shuffle(otherMonths).slice(0, 3);
+  const options = shuffle([maxMonth, ...distractors]);
+
+  const chartData = months.map((name, i) => ({ name, Sales: values[i] }));
+
   return {
     id: `bar-${Date.now()}-${Math.random()}`,
-    question: `Sales data: Jan=${values[0]}, Feb=${values[1]}, Mar=${values[2]}, Apr=${values[3]}. Which month had highest sales?`,
+    question: `Look at the bar chart below. Which month had the highest sales?`,
     options,
     correctAnswer: options.indexOf(maxMonth),
-    explanation: `${maxMonth} had the highest sales with ${max} units.`,
+    explanation: `${maxMonth} had the highest sales with ${max} units as shown by the tallest bar.`,
     topic: 'Bar Charts',
-    hint: `Method: Compare all values to find the maximum\nValues: Jan=${values[0]}, Feb=${values[1]}, Mar=${values[2]}, Apr=${values[3]}\nHighest: ${maxMonth} with ${max} units\nAnswer: ${maxMonth}`,
+    hint: `Find the tallest bar in the chart — that month has the highest sales.\nValues: Jan=${values[0]}, Feb=${values[1]}, Mar=${values[2]}, Apr=${values[3]}\nHighest: ${maxMonth} with ${max} units`,
+    chartType: 'bar',
+    chartData,
+    chartTitle: 'Monthly Sales Data',
+    xKey: 'name',
+    yKey: 'Sales',
   };
 }
 
-// Pie Chart Analysis
-function generatePieChartQuestion(): Question {
+// ── Pie Chart Question ──────────────────────────────────────────────────────
+function generatePieChartQuestion(): DataVisQuestionWithChart {
   const categories = ['Product A', 'Product B', 'Product C', 'Product D'];
-  const percentages = [randomInt(15, 35), randomInt(15, 35), randomInt(15, 35), randomInt(10, 25)];
-  const total = percentages.reduce((a, b) => a + b, 0);
-  const normalized = percentages.map(p => Math.round((p / total) * 100));
-  
-  const max = Math.max(...normalized);
-  const maxCategory = categories[normalized.indexOf(max)];
-  
-  const wrong1 = categories[(normalized.indexOf(max) + 1) % categories.length];
-  const wrong2 = categories[(normalized.indexOf(max) + 2) % categories.length];
-  const wrong3 = categories[(normalized.indexOf(max) + 3) % categories.length];
-  
-  const options = shuffle([maxCategory, wrong1, wrong2, wrong3]);
-  
+  const raw = categories.map(() => randomInt(15, 40));
+  const total = raw.reduce((a, b) => a + b, 0);
+  const percentages = raw.map((p) => Math.round((p / total) * 100));
+
+  // Fix rounding so total = 100
+  const diff = 100 - percentages.reduce((a, b) => a + b, 0);
+  percentages[0] += diff;
+
+  const max = Math.max(...percentages);
+  const maxCategory = categories[percentages.indexOf(max)];
+  const distractors = categories.filter((c) => c !== maxCategory);
+  const options = shuffle([maxCategory, ...distractors]);
+
+  const chartData = categories.map((name, i) => ({ name, value: percentages[i] }));
+
   return {
     id: `pie-${Date.now()}-${Math.random()}`,
-    question: `Market share: A=${normalized[0]}%, B=${normalized[1]}%, C=${normalized[2]}%, D=${normalized[3]}%. Which has largest share?`,
+    question: `Look at the pie chart below. Which product has the largest market share?`,
     options,
     correctAnswer: options.indexOf(maxCategory),
-    explanation: `${maxCategory} has the largest market share at ${max}%.`,
+    explanation: `${maxCategory} has the largest market share at ${max}% — it's the biggest slice of the pie.`,
     topic: 'Pie Charts',
-    hint: `Method: Compare percentages to find the largest\nA=${normalized[0]}%, B=${normalized[1]}%, C=${normalized[2]}%, D=${normalized[3]}%\nLargest: ${maxCategory} at ${max}%\nAnswer: ${maxCategory}`,
+    hint: `Find the largest slice in the pie chart.\nA=${percentages[0]}%, B=${percentages[1]}%, C=${percentages[2]}%, D=${percentages[3]}%\nLargest: ${maxCategory} at ${max}%`,
+    chartType: 'pie',
+    chartData,
+    chartTitle: 'Market Share Distribution',
+    valueKey: 'value',
   };
 }
 
-// Line Graph Trends
-function generateLineGraphQuestion(): Question {
-  const values = [randomInt(100, 200), randomInt(120, 220), randomInt(140, 240), randomInt(160, 260)];
+// ── Line Chart Question ─────────────────────────────────────────────────────
+function generateLineGraphQuestion(): DataVisQuestionWithChart {
+  const years = ['2020', '2021', '2022', '2023'];
+  const values = [randomInt(100, 200), randomInt(120, 230), randomInt(140, 260), randomInt(160, 280)];
   const increase = values[3] - values[0];
-  
+
   const wrong1 = increase + randomInt(10, 30);
-  const wrong2 = increase - randomInt(10, 30);
+  const wrong2 = Math.max(1, increase - randomInt(10, 30));
   const wrong3 = Math.round(increase * 1.5);
-  
+
   const options = shuffle([
     increase.toString(),
     wrong1.toString(),
     wrong2.toString(),
     wrong3.toString(),
   ]);
-  
+
+  const chartData = years.map((name, i) => ({ name, Revenue: values[i] }));
+
   return {
     id: `line-${Date.now()}-${Math.random()}`,
-    question: `Revenue trend: 2020=${values[0]}, 2021=${values[1]}, 2022=${values[2]}, 2023=${values[3]}. What's the total increase from 2020 to 2023?`,
+    question: `Look at the line chart below. What is the total increase in revenue from 2020 to 2023?`,
     options,
     correctAnswer: options.indexOf(increase.toString()),
-    explanation: `The increase is ${values[3]} - ${values[0]} = ${increase}.`,
+    explanation: `Total increase = 2023 value (${values[3]}) − 2020 value (${values[0]}) = ${increase}.`,
     topic: 'Line Graphs',
-    hint: `Formula: Total increase = Final value - Initial value\n2023 value: ${values[3]}\n2020 value: ${values[0]}\nIncrease = ${values[3]} - ${values[0]} = ${increase}\nAnswer: ${increase}`,
+    hint: `Total increase = Final value − Initial value.\n2023: ${values[3]}, 2020: ${values[0]}\nIncrease = ${values[3]} − ${values[0]} = ${increase}`,
+    chartType: 'line',
+    chartData,
+    chartTitle: 'Revenue Trend (2020–2023)',
+    xKey: 'name',
+    yKey: 'Revenue',
   };
 }
 
-// Table Data
-function generateTableQuestion(): Question {
-  const cities = ['City A', 'City B', 'City C'];
-  const populations = [randomInt(500, 1000), randomInt(500, 1000), randomInt(500, 1000)];
-  const total = populations.reduce((a, b) => a + b, 0);
-  const avg = Math.round(total / cities.length);
-  
-  const wrong1 = avg + randomInt(50, 100);
-  const wrong2 = avg - randomInt(50, 100);
-  const wrong3 = Math.round(total / 2);
-  
-  const options = shuffle([
-    avg.toString(),
-    wrong1.toString(),
-    wrong2.toString(),
-    wrong3.toString(),
-  ]);
-  
+// ── Bar Chart – Lowest value ────────────────────────────────────────────────
+function generateBarChartLowestQuestion(): DataVisQuestionWithChart {
+  const departments = ['HR', 'Sales', 'Tech', 'Finance'];
+  const values = departments.map(() => randomInt(30, 90));
+  const min = Math.min(...values);
+  const minDept = departments[values.indexOf(min)];
+
+  const distractors = shuffle(departments.filter((d) => d !== minDept)).slice(0, 3);
+  const options = shuffle([minDept, ...distractors]);
+
+  const chartData = departments.map((name, i) => ({ name, Budget: values[i] }));
+
   return {
-    id: `table-${Date.now()}-${Math.random()}`,
-    question: `Population data: City A=${populations[0]}k, City B=${populations[1]}k, City C=${populations[2]}k. What's the average population?`,
+    id: `bar-low-${Date.now()}-${Math.random()}`,
+    question: `Look at the bar chart below. Which department has the lowest budget allocation?`,
     options,
-    correctAnswer: options.indexOf(avg.toString()),
-    explanation: `Average = (${populations[0]} + ${populations[1]} + ${populations[2]}) / 3 = ${avg}k.`,
-    topic: 'Tables',
-    hint: `To find the average, add all the values together and divide by how many values there are. This is called the arithmetic mean.`,
+    correctAnswer: options.indexOf(minDept),
+    explanation: `${minDept} has the lowest budget at ${min} units — the shortest bar in the chart.`,
+    topic: 'Bar Charts',
+    hint: `Find the shortest bar in the chart.\nHR=${values[0]}, Sales=${values[1]}, Tech=${values[2]}, Finance=${values[3]}\nLowest: ${minDept} with ${min} units`,
+    chartType: 'bar',
+    chartData,
+    chartTitle: 'Department Budget Allocation',
+    xKey: 'name',
+    yKey: 'Budget',
   };
 }
 
-// Percentage Calculations
-function generatePercentageChartQuestion(): Question {
-  const total = randomInt(500, 1000);
-  const percentage = randomInt(20, 60);
-  const value = Math.round((total * percentage) / 100);
-  
-  const wrong1 = Math.round((total * (percentage + 10)) / 100);
-  const wrong2 = Math.round((total * (percentage - 10)) / 100);
-  const wrong3 = Math.round(total / 2);
-  
-  const options = shuffle([
-    value.toString(),
-    wrong1.toString(),
-    wrong2.toString(),
-    wrong3.toString(),
-  ]);
-  
+// ── Line Chart – Peak month ─────────────────────────────────────────────────
+function generateLinePeakQuestion(): DataVisQuestionWithChart {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const values = months.map(() => randomInt(50, 200));
+  const max = Math.max(...values);
+  const maxMonth = months[values.indexOf(max)];
+
+  const distractors = shuffle(months.filter((m) => m !== maxMonth)).slice(0, 3);
+  const options = shuffle([maxMonth, ...distractors]);
+
+  const chartData = months.map((name, i) => ({ name, Visitors: values[i] }));
+
   return {
-    id: `percent-${Date.now()}-${Math.random()}`,
-    question: `If the total budget is ${total} and ${percentage}% is allocated to marketing, how much is the marketing budget?`,
+    id: `line-peak-${Date.now()}-${Math.random()}`,
+    question: `Look at the line chart below. In which month were website visitors the highest?`,
     options,
-    correctAnswer: options.indexOf(value.toString()),
-    explanation: `Marketing budget = ${percentage}% of ${total} = ${value}.`,
-    topic: 'Data Percentages',
-    hint: `To find a percentage of a value, multiply the total by the percentage and divide by 100. Think of percentage as "per hundred".`,
+    correctAnswer: options.indexOf(maxMonth),
+    explanation: `${maxMonth} had the peak with ${max} visitors — the highest point on the line.`,
+    topic: 'Line Graphs',
+    hint: `Look for the highest point on the line graph — that's the peak month.\nValues: ${months.map((m, i) => `${m}=${values[i]}`).join(', ')}\nPeak: ${maxMonth} with ${max} visitors`,
+    chartType: 'line',
+    chartData,
+    chartTitle: 'Monthly Website Visitors',
+    xKey: 'name',
+    yKey: 'Visitors',
   };
 }
 
-export function generateDatavisQuestion(_level: number = 1): Question {
+// ── Pie Chart – Smallest share ──────────────────────────────────────────────
+function generatePieSmallestQuestion(): DataVisQuestionWithChart {
+  const regions = ['North', 'South', 'East', 'West'];
+  const raw = regions.map(() => randomInt(10, 40));
+  const total = raw.reduce((a, b) => a + b, 0);
+  const percentages = raw.map((p) => Math.round((p / total) * 100));
+  const diff = 100 - percentages.reduce((a, b) => a + b, 0);
+  percentages[0] += diff;
+
+  const min = Math.min(...percentages);
+  const minRegion = regions[percentages.indexOf(min)];
+  const distractors = shuffle(regions.filter((r) => r !== minRegion)).slice(0, 3);
+  const options = shuffle([minRegion, ...distractors]);
+
+  const chartData = regions.map((name, i) => ({ name, value: percentages[i] }));
+
+  return {
+    id: `pie-small-${Date.now()}-${Math.random()}`,
+    question: `Look at the pie chart below. Which region has the smallest sales contribution?`,
+    options,
+    correctAnswer: options.indexOf(minRegion),
+    explanation: `${minRegion} has the smallest share at ${min}% — the tiniest slice of the pie.`,
+    topic: 'Pie Charts',
+    hint: `Find the smallest slice in the pie chart.\nNorth=${percentages[0]}%, South=${percentages[1]}%, East=${percentages[2]}%, West=${percentages[3]}%\nSmallest: ${minRegion} at ${min}%`,
+    chartType: 'pie',
+    chartData,
+    chartTitle: 'Regional Sales Contribution',
+    valueKey: 'value',
+  };
+}
+
+// ── Main exports ────────────────────────────────────────────────────────────
+export function generateDatavisQuestion(_level: number = 1): DataVisQuestionWithChart {
   const generators = [
     generateBarChartQuestion,
     generatePieChartQuestion,
     generateLineGraphQuestion,
-    generateTableQuestion,
-    generatePercentageChartQuestion,
+    generateBarChartLowestQuestion,
+    generateLinePeakQuestion,
+    generatePieSmallestQuestion,
   ];
-  
+
   const randomGenerator = generators[randomInt(0, generators.length - 1)];
   return randomGenerator();
 }
 
-export function generateDatavisQuestionSet(count: number, level: number = 1): Question[] {
-  const questions: Question[] = [];
+export function generateDatavisQuestionSet(count: number, level: number = 1): DataVisQuestionWithChart[] {
+  const questions: DataVisQuestionWithChart[] = [];
   const usedQuestions = new Set<string>();
-  
+
   while (questions.length < count) {
     const question = generateDatavisQuestion(level);
     if (!usedQuestions.has(question.question)) {
@@ -181,6 +233,6 @@ export function generateDatavisQuestionSet(count: number, level: number = 1): Qu
       usedQuestions.add(question.question);
     }
   }
-  
+
   return questions;
 }
